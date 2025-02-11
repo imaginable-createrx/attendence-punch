@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NEET App: Multiple Child Users & Multiple Tests</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600&display=swap" rel="stylesheet" />
+  <style>
+    /* Global Reset */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      min-height: 100vh;
+      color: #333;
+      padding: 20px;
+    }
+    a { text-decoration: none; color: inherit; }
+    
+    /* ---------- Login Screen ---------- */
+    .login-wrapper {
+      max-width: 400px;
+      margin: 5% auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    .login-header {
+      display: flex;
+      background: #f6f6f6;
+    }
+    .login-header div {
+      flex: 1;
+      text-align: center;
+      padding: 15px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.3s;
+      color: #555;
+    }
+    .login-header div.active {
+      background: #fff;
+      border-bottom: 2px solid #667eea;
+      color: #667eea;
+    }
+    .login-form { padding: 20px; }
+    .login-form h2 { text-align: center; margin-bottom: 20px; color: #333; }
+    .login-form input {
+      width: 100%;
+      padding: 12px 15px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+    }
+    .login-form input:focus { outline: none; border-color: #667eea; }
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      background: #667eea;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.3s;
+    }
+    .btn:hover { background: #5a67d8; }
+    .hidden { display: none; }
+    
+    /* ---------- Dashboard ---------- */
+    .dashboard {
+      max-width: 900px;
+      margin: 20px auto;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .dashboard-nav {
+      background: #667eea;
+    }
+    .dashboard-nav ul {
+      list-style: none;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      margin: 0;
+      padding: 0;
+    }
+    .dashboard-nav ul li {
+      padding: 15px 20px;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .dashboard-nav ul li.active,
+    .dashboard-nav ul li:hover { background: #5a67d8; }
+    .dashboard-nav ul li.logout { background: #e53e3e; }
+    .dashboard-nav ul li.logout:hover { background: #c53030; }
+    .dashboard-content { padding: 20px; }
+    
+    /* ---------- Child Dashboard Sections ---------- */
+    .attendance-section { text-align: center; }
+    .attendance-section h3 { margin-bottom: 15px; color: #667eea; }
+    .attendance-section .message { margin-top: 15px; font-size: 1.1rem; color: #28a745; }
+    /* Calendar styling */
+    #attendanceCalendar, #teacherAttendanceCalendar {
+      margin-top: 20px;
+    }
+    #attendanceCalendar table, #teacherAttendanceCalendar table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+    }
+    #attendanceCalendar th, #attendanceCalendar td,
+    #teacherAttendanceCalendar th, #teacherAttendanceCalendar td {
+      border: 1px solid #ccc;
+      padding: 5px;
+    }
+    /* ---------- Study Materials (Accordion) ---------- */
+    .accordion { margin: 20px auto; max-width: 800px; }
+    .accordion details {
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      padding: 10px;
+    }
+    .accordion details summary {
+      cursor: pointer;
+      padding: 10px;
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: #667eea;
+      list-style: none;
+    }
+    .accordion details summary::-webkit-details-marker { display: none; }
+    .accordion details ul { margin-top: 10px; padding-left: 20px; }
+    .accordion details ul li { margin-bottom: 8px; }
+    .accordion details ul li a {
+      display: inline-block;
+      padding: 6px 10px;
+      background: #667eea;
+      color: #fff;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      transition: background 0.3s;
+    }
+    .accordion details ul li a:hover { background: #5a67d8; }
+    /* ---------- Notifications ---------- */
+    #notificationsSection div {
+      border-bottom: 1px solid #ddd;
+      padding: 10px 0;
+    }
+    /* ---------- Tests Tab (Child) ---------- */
+    /* List of available tests */
+    #testList { margin-top: 20px; }
+    #testList button { margin-bottom: 10px; }
+    
+    /* ---------- Test Page (Separate from Child Dashboard) ---------- */
+    #testPage {
+      max-width: 900px;
+      margin: 20px auto;
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    #pdfTestContainer {
+      position: relative;
+      margin: 20px auto;
+      max-width: 900px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    #pdfViewer {
+      width: 100%;
+      height: 600px;
+    }
+    #pdfTimer {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+    #finishTestBtn {
+      margin: 10px auto;
+      display: block;
+      width: auto;
+    }
+    #uploadSection {
+      text-align: center;
+      margin-top: 20px;
+    }
+    #uploadSection input[type="file"] { margin-bottom: 10px; }
+    #returnBtn { margin-top: 20px; }
+    
+    /* ---------- Teacher Dashboard (Nav) ---------- */
+    .teacher-nav ul {
+      list-style: none;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      margin: 0;
+      padding: 0;
+      background: #667eea;
+    }
+    .teacher-nav ul li {
+      padding: 15px 20px;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .teacher-nav ul li.active,
+    .teacher-nav ul li:hover { background: #5a67d8; }
+    .teacher-nav ul li.logout { background: #e53e3e; }
+    .teacher-nav ul li.logout:hover { background: #c53030; }
+  </style>
+</head>
+<body>
+  <!-- LOGIN SCREEN -->
+  <div class="login-wrapper" id="loginWrapper">
+    <div class="login-header">
+      <div id="childLoginTab" class="active" onclick="toggleLogin('child')">Child Login</div>
+      <div id="teacherLoginTab" onclick="toggleLogin('teacher')">Teacher Login</div>
+    </div>
+    <!-- Child Login Form -->
+    <div class="login-form" id="childLoginForm">
+      <h2>Child Login</h2>
+      <input type="text" id="childUsername" placeholder="Username" />
+      <input type="password" id="childPassword" placeholder="Password" />
+      <button class="btn" onclick="childLogin()">Login</button>
+    </div>
+    <!-- Teacher Login Form -->
+    <div class="login-form hidden" id="teacherLoginForm">
+      <h2>Teacher Login</h2>
+      <input type="text" id="teacherUsername" placeholder="Username" />
+      <input type="password" id="teacherPassword" placeholder="Password" />
+      <button class="btn" onclick="teacherLogin()">Login</button>
+    </div>
+  </div>
+  
+  <!-- CHILD DASHBOARD -->
+  <div class="dashboard hidden" id="childDashboard">
+    <nav class="dashboard-nav">
+      <ul>
+        <li class="active" data-tab="attendance" onclick="switchChildTab('attendance')">Attendance</li>
+        <li data-tab="materials" onclick="switchChildTab('materials')">Study Materials</li>
+        <li data-tab="notifications" onclick="switchChildTab('notifications')">Notifications</li>
+        <li data-tab="tests" onclick="switchChildTab('tests')">Tests</li>
+        <li class="logout" onclick="childLogout()">Logout</li>
+      </ul>
+    </nav>
+    <div class="dashboard-content">
+      <!-- Attendance Tab (Child) -->
+      <div id="childAttendanceTab">
+        <div class="attendance-section">
+          <h3>Mark Your Attendance</h3>
+          <button class="btn" id="attendanceBtn" onclick="markAttendance()">Mark Attendance</button>
+          <div class="message" id="attendanceMsg"></div>
+          <!-- Calendar for current month -->
+          <div id="attendanceCalendar"></div>
+        </div>
+      </div>
+      <!-- Study Materials Tab -->
+      <div id="childMaterialsTab" class="hidden">
+        <h3 style="text-align:center; color:#667eea; margin-bottom:20px;">NEET Study Materials</h3>
+        <div class="accordion" id="materialsAccordion"></div>
+      </div>
+      <!-- Notifications Tab -->
+      <div id="childNotificationsTab" class="hidden">
+        <h3 style="text-align:center; color:#667eea; margin-bottom:20px;">Notifications</h3>
+        <div id="notificationsSection"></div>
+      </div>
+      <!-- Tests Tab (Child) -->
+      <div id="childTestsTab" class="hidden">
+        <h3 style="text-align:center; color:#667eea; margin-bottom:20px;">Tests</h3>
+        <div id="testList"></div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- TEST PAGE (Separate from Child Dashboard) -->
+  <div class="dashboard hidden" id="testPage">
+    <h2 style="text-align:center; color:#667eea; margin-bottom:20px;">NEET Mock Test</h2>
+    <div id="testInterface"></div>
+    <button class="btn hidden" id="returnBtn" onclick="returnToDashboard()">Return to Dashboard</button>
+  </div>
+  
+  <!-- TEACHER DASHBOARD -->
+  <div class="dashboard hidden" id="teacherDashboard">
+    <nav class="teacher-nav">
+      <ul>
+        <li class="active" data-tab="attendance" onclick="switchTeacherTab('attendance')">Attendance</li>
+        <li data-tab="reviewTests" onclick="switchTeacherTab('reviewTests')">Review Tests</li>
+        <li class="logout" onclick="teacherLogout()">Logout</li>
+      </ul>
+    </nav>
+    <div class="dashboard-content" id="teacherContent"></div>
+  </div>
+  
+  <script>
+    /***********************
+     * Global Variables and Data Arrays
+     ***********************/
+    var currentChild = "";      // stores the username of the logged-in child
+    var currentTestId = "";       // stores the selected test's ID
+    var currentTestPdf = "";      // stores the PDF URL for the selected test
+    
+    // Define valid child users
+    var childUsers = [
+      { username: "child1", password: "pass1" },
+      { username: "child2", password: "pass2" },
+      { username: "child3", password: "pass3" }
+    ];
+    // Teacher credentials remain as before.
+    
+    // Available tests (modify PDF URLs as needed)
+    var availableTests = [
+      { id: "test1", name: "NEET Mock Test 1", pdf: "question1.pdf" },
+      { id: "test2", name: "NEET Mock Test 2", pdf: "question2.pdf" },
+      { id: "test3", name: "NEET Mock Test 3", pdf: "question3.pdf" }
+    ];
+    
+    /***********************
+     * Utility Functions for Attendance Records (per child)
+     ***********************/
+    function getAttendanceRecords(child) {
+      let rec = localStorage.getItem("attendanceRecords_" + child);
+      return rec ? JSON.parse(rec) : {};
+    }
+    function setAttendanceRecords(child, records) {
+      localStorage.setItem("attendanceRecords_" + child, JSON.stringify(records));
+    }
+    
+    /***********************
+     * Render Attendance Calendar
+     ***********************/
+    function renderAttendanceCalendar(containerId) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = "";
+      // Use currentChild if set; otherwise use "default"
+      let childKey = currentChild || "default";
+      const records = getAttendanceRecords(childKey);
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth();
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      
+      let table = document.createElement("table");
+      const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+      let headerRow = document.createElement("tr");
+      daysOfWeek.forEach(day => {
+        let th = document.createElement("th");
+        th.textContent = day;
+        headerRow.appendChild(th);
+      });
+      table.appendChild(headerRow);
+      
+      let date = 1;
+      for (let i = 0; i < 6; i++) {
+        let row = document.createElement("tr");
+        for (let j = 0; j < 7; j++) {
+          let cell = document.createElement("td");
+          if (i === 0 && j < firstDay) {
+            cell.textContent = "";
+          } else if (date > daysInMonth) {
+            cell.textContent = "";
+          } else {
+            cell.textContent = date;
+            let dateStr = `${year}-${(month+1).toString().padStart(2, '0')}-${date.toString().padStart(2, '0')}`;
+            let cellDate = new Date(year, month, date);
+            if (cellDate > now) {
+              cell.style.backgroundColor = "#eee";
+            } else {
+              if (records[dateStr]) {
+                cell.style.backgroundColor = "#c6f6d5"; // Present
+              } else {
+                cell.style.backgroundColor = "#fed7d7"; // Absent
+              }
+            }
+            date++;
+          }
+          row.appendChild(cell);
+        }
+        table.appendChild(row);
+        if (date > daysInMonth) break;
+      }
+      container.appendChild(table);
+    }
+    
+    /***********************
+     * Navigation Functions
+     ***********************/
+    function toggleLogin(type) {
+      const childTab = document.getElementById('childLoginTab');
+      const teacherTab = document.getElementById('teacherLoginTab');
+      const childForm = document.getElementById('childLoginForm');
+      const teacherForm = document.getElementById('teacherLoginForm');
+      if (type === 'child') {
+        childTab.classList.add('active');
+        teacherTab.classList.remove('active');
+        childForm.classList.remove('hidden');
+        teacherForm.classList.add('hidden');
+      } else {
+        teacherTab.classList.add('active');
+        childTab.classList.remove('active');
+        teacherForm.classList.remove('hidden');
+        childForm.classList.add('hidden');
+      }
+    }
+    
+    function childLogin() {
+      const username = document.getElementById('childUsername').value;
+      const password = document.getElementById('childPassword').value;
+      let valid = false;
+      for (let user of childUsers) {
+        if (user.username === username && user.password === password) {
+          valid = true;
+          currentChild = username;
+          break;
+        }
+      }
+      if (valid) {
+        document.getElementById('loginWrapper').classList.add('hidden');
+        document.getElementById('childDashboard').classList.remove('hidden');
+        switchChildTab('attendance');
+        // Check today's attendance
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')}`;
+        const records = getAttendanceRecords(currentChild);
+        if (records[todayStr]) {
+          document.getElementById('attendanceMsg').textContent = "Attendance marked at " + records[todayStr];
+          document.getElementById('attendanceBtn').disabled = true;
+        }
+        loadStudyMaterials();
+        renderAttendanceCalendar("attendanceCalendar");
+        loadTestList();
+      } else {
+        alert("Invalid child credentials.");
+      }
+    }
+    
+    function teacherLogin() {
+      const username = document.getElementById('teacherUsername').value;
+      const password = document.getElementById('teacherPassword').value;
+      if (username === "teacher" && password === "teacher123") {
+        document.getElementById('loginWrapper').classList.add('hidden');
+        document.getElementById('teacherDashboard').classList.remove('hidden');
+        switchTeacherTab('attendance');
+      } else {
+        alert("Invalid teacher credentials.");
+      }
+    }
+    
+    /***********************
+     * Child Dashboard Tab Switching
+     ***********************/
+    function switchChildTab(tab) {
+      document.querySelectorAll('.dashboard-nav ul li[data-tab]').forEach(li => {
+        li.classList.remove('active');
+        if (li.dataset.tab === tab) li.classList.add('active');
+      });
+      document.getElementById('childAttendanceTab').classList.add('hidden');
+      document.getElementById('childMaterialsTab').classList.add('hidden');
+      document.getElementById('childNotificationsTab').classList.add('hidden');
+      document.getElementById('childTestsTab').classList.add('hidden');
+      if (tab === 'attendance') {
+        document.getElementById('childAttendanceTab').classList.remove('hidden');
+        renderAttendanceCalendar("attendanceCalendar");
+      } else if (tab === 'materials') {
+        document.getElementById('childMaterialsTab').classList.remove('hidden');
+      } else if (tab === 'notifications') {
+        document.getElementById('childNotificationsTab').classList.remove('hidden');
+        loadNotifications();
+      } else if (tab === 'tests') {
+        document.getElementById('childTestsTab').classList.remove('hidden');
+        loadTestList();
+      }
+    }
+    
+    /***********************
+     * Teacher Dashboard Tab Switching
+     ***********************/
+    function switchTeacherTab(tab) {
+      document.querySelectorAll('.teacher-nav ul li[data-tab]').forEach(li => {
+        li.classList.remove('active');
+        if (li.dataset.tab === tab) li.classList.add('active');
+      });
+      if (tab === 'attendance') {
+        loadTeacherAttendance();
+      } else if (tab === 'reviewTests') {
+        loadTeacherReview();
+      }
+    }
+    
+    /***********************
+     * Attendance Functionality (Daily, per child)
+     ***********************/
+    function markAttendance() {
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')}`;
+      const records = getAttendanceRecords(currentChild);
+      if (records[todayStr]) {
+        alert("Attendance already marked for today.");
+        return;
+      }
+      records[todayStr] = now.toLocaleTimeString();
+      setAttendanceRecords(currentChild, records);
+      document.getElementById('attendanceMsg').textContent = "Attendance marked at " + records[todayStr];
+      document.getElementById('attendanceBtn').disabled = true;
+      renderAttendanceCalendar("attendanceCalendar");
+    }
+    
+    /***********************
+     * Study Materials (Accordion)
+     ***********************/
+    function loadStudyMaterials() {
+      const accordion = document.getElementById('materialsAccordion');
+      accordion.innerHTML = "";
+      const materials = [
+        {
+          subject: "Physics",
+          chapters: [
+            { chapter: "Mechanics", pdf: "materials/physics/mechanics.pdf" },
+            { chapter: "Thermodynamics", pdf: "materials/physics/thermodynamics.pdf" },
+            { chapter: "Optics", pdf: "materials/physics/optics.pdf" }
+          ]
+        },
+        {
+          subject: "Chemistry",
+          chapters: [
+            { chapter: "Organic Chemistry", pdf: "materials/chemistry/organic.pdf" },
+            { chapter: "Inorganic Chemistry", pdf: "materials/chemistry/inorganic.pdf" },
+            { chapter: "Physical Chemistry", pdf: "materials/chemistry/physical.pdf" }
+          ]
+        },
+        {
+          subject: "Biology",
+          chapters: [
+            { chapter: "Botany", pdf: "materials/biology/botany.pdf" },
+            { chapter: "Zoology", pdf: "materials/biology/zoology.pdf" }
+          ]
+        }
+      ];
+      materials.forEach(item => {
+        const detailsEl = document.createElement('details');
+        const summaryEl = document.createElement('summary');
+        summaryEl.textContent = item.subject;
+        detailsEl.appendChild(summaryEl);
+        const ulEl = document.createElement('ul');
+        item.chapters.forEach(chapterObj => {
+          const liEl = document.createElement('li');
+          liEl.innerHTML = `<a href="${chapterObj.pdf}" target="_blank">${chapterObj.chapter}</a>`;
+          ulEl.appendChild(liEl);
+        });
+        detailsEl.appendChild(ulEl);
+        accordion.appendChild(detailsEl);
+      });
+    }
+    
+    /***********************
+     * Notifications
+     ***********************/
+    function loadNotifications() {
+      const notifSection = document.getElementById('notificationsSection');
+      notifSection.innerHTML = "";
+      const notifs = [
+        { date: "2023-02-10", message: "New study material uploaded for Physics." },
+        { date: "2023-02-15", message: "Mock test available for Chemistry." }
+      ];
+      if (notifs.length === 0) {
+        notifSection.innerHTML = "<p style='text-align:center;'>No notifications available.</p>";
+      } else {
+        notifs.forEach(notif => {
+          const div = document.createElement('div');
+          div.innerHTML = `<strong>${notif.date}</strong>: ${notif.message}`;
+          notifSection.appendChild(div);
+        });
+      }
+    }
+    
+    /***********************
+     * Test Section (Child) – List of Available Tests
+     ***********************/
+    function loadTestList() {
+      const testListDiv = document.getElementById('testList');
+      testListDiv.innerHTML = "";
+      availableTests.forEach(test => {
+        // Build a key for this test for the current child:
+        let keyAttempted = "childTestAttempted_" + currentChild + "_" + test.id;
+        let attempted = localStorage.getItem(keyAttempted);
+        let btn = document.createElement("button");
+        btn.className = "btn";
+        if (attempted) {
+          btn.textContent = test.name + " (Attempted)";
+          btn.disabled = true;
+        } else {
+          btn.textContent = "Take " + test.name;
+          btn.onclick = function() {
+            currentTestId = test.id;
+            currentTestPdf = test.pdf;
+            goToTestPage();
+          };
+        }
+        testListDiv.appendChild(btn);
+      });
+    }
+    
+    /***********************
+     * Test Page Navigation
+     ***********************/
+    function goToTestPage() {
+      document.getElementById('childDashboard').classList.add('hidden');
+      document.getElementById('testPage').classList.remove('hidden');
+      updateTestPageInterface();
+    }
+    function returnToDashboard() {
+      document.getElementById('testPage').classList.add('hidden');
+      document.getElementById('childDashboard').classList.remove('hidden');
+      loadTestList();
+    }
+    
+    /***********************
+     * Test Page Interface (PDF-Based Test)
+     * Keys include currentChild and currentTestId.
+     ***********************/
+    const testTimeLimit = 600; // 10 minutes in seconds
+    var pdfTestTimerInterval, pdfTestTimeRemaining;
+    function updateTestPageInterface() {
+      let keyAttempted = "childTestAttempted_" + currentChild + "_" + currentTestId;
+      if (localStorage.getItem(keyAttempted)) {
+        if (localStorage.getItem("childTestGraded_" + currentChild + "_" + currentTestId) === "true") {
+          document.getElementById('testInterface').innerHTML = "<p>Your test has been graded.</p>";
+        } else {
+          document.getElementById('testInterface').innerHTML = "<p>Your test has been submitted. Waiting for teacher grading.</p>";
+        }
+        document.getElementById('returnBtn').classList.remove('hidden');
+      } else {
+        document.getElementById('testInterface').innerHTML = `
+          <div id="testNotAttempted">
+            <button class="btn" onclick="startPDFTest()">Start Test</button>
+          </div>
+        `;
+        document.getElementById('returnBtn').classList.add('hidden');
+      }
+    }
+    
+    function startPDFTest() {
+      let keyAttempted = "childTestAttempted_" + currentChild + "_" + currentTestId;
+      if (localStorage.getItem(keyAttempted)) {
+        alert("Test already attempted.");
+        return;
+      }
+      const testInterface = document.getElementById('testInterface');
+      testInterface.innerHTML = `
+        <div id="pdfTestContainer">
+          <div id="pdfTimer">--:--</div>
+          <iframe id="pdfViewer" src="${currentTestPdf}"></iframe>
+        </div>
+        <button class="btn" id="finishTestBtn" onclick="finishPDFTest()">Finish Test</button>
+      `;
+      pdfTestTimeRemaining = testTimeLimit;
+      updatePDFTimerDisplay();
+      pdfTestTimerInterval = setInterval(() => {
+        pdfTestTimeRemaining--;
+        updatePDFTimerDisplay();
+        if (pdfTestTimeRemaining <= 0) {
+          clearInterval(pdfTestTimerInterval);
+          finishPDFTest();
+        }
+      }, 1000);
+    }
+    
+    function updatePDFTimerDisplay() {
+      const timerDisplay = document.getElementById('pdfTimer');
+      const minutes = Math.floor(pdfTestTimeRemaining / 60);
+      const seconds = pdfTestTimeRemaining % 60;
+      timerDisplay.textContent =
+        (minutes < 10 ? "0" + minutes : minutes) + ":" +
+        (seconds < 10 ? "0" + seconds : seconds);
+    }
+    
+    function finishPDFTest() {
+      clearInterval(pdfTestTimerInterval);
+      const pdfContainer = document.getElementById('pdfTestContainer');
+      const finishBtn = document.getElementById('finishTestBtn');
+      if (pdfContainer) pdfContainer.style.display = 'none';
+      if (finishBtn) finishBtn.style.display = 'none';
+      showUploadSectionTestPage();
+    }
+    
+    function showUploadSectionTestPage() {
+      const testInterface = document.getElementById('testInterface');
+      testInterface.innerHTML = `
+        <div id="uploadSection">
+          <p>Please upload a photo(s) of your answer copy (max 2 images):</p>
+          <input type="file" id="uploadInput" accept="image/*" multiple />
+          <button class="btn" onclick="submitUploadedTest()">Submit Test</button>
+        </div>
+      `;
+    }
+    
+    function submitUploadedTest() {
+      const input = document.getElementById('uploadInput');
+      const files = input.files;
+      if (!files || files.length === 0) {
+        alert("Please select at least one image.");
+        return;
+      }
+      if (files.length > 2) {
+        alert("You can upload a maximum of 2 images.");
+        return;
+      }
+      const readerPromises = [];
+      for (let i = 0; i < files.length; i++) {
+        readerPromises.push(new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = function(e) { resolve(e.target.result); };
+          reader.onerror = function() { reject("Error reading file."); };
+          reader.readAsDataURL(files[i]);
+        }));
+      }
+      Promise.all(readerPromises)
+        .then((base64Images) => {
+          let keyImages = "childTestSubmissionImages_" + currentChild + "_" + currentTestId;
+          let keyAttempted = "childTestAttempted_" + currentChild + "_" + currentTestId;
+          let keyGraded = "childTestGraded_" + currentChild + "_" + currentTestId;
+          localStorage.setItem(keyImages, JSON.stringify(base64Images));
+          localStorage.setItem(keyAttempted, "true");
+          localStorage.setItem(keyGraded, "false");
+          document.getElementById('testInterface').innerHTML = "<p>Your test has been submitted. Waiting for teacher grading.</p>";
+          document.getElementById('returnBtn').classList.remove('hidden');
+        })
+        .catch(err => {
+          alert("There was an error processing your images.");
+        });
+    }
+    
+    /***********************
+     * Teacher Review & Grading (Test) – Custom Grading System
+     * Teacher selects a child and a test, then manually enters a grade.
+     ***********************/
+    function loadTeacherReview() {
+      const container = document.getElementById('teacherContent');
+      container.innerHTML = "<h3 style='text-align:center; margin-bottom:20px;'>Review Test Submission</h3>";
+      
+      // Dropdown for child selection
+      let childSelect = document.createElement('select');
+      childUsers.forEach(user => {
+        let opt = document.createElement('option');
+        opt.value = user.username;
+        opt.textContent = user.username;
+        childSelect.appendChild(opt);
+      });
+      
+      // Dropdown for test selection
+      let testSelect = document.createElement('select');
+      availableTests.forEach(test => {
+        let opt = document.createElement('option');
+        opt.value = test.id;
+        opt.textContent = test.name;
+        testSelect.appendChild(opt);
+      });
+      
+      let loadBtn = document.createElement('button');
+      loadBtn.className = "btn";
+      loadBtn.textContent = "Load Submission";
+      loadBtn.onclick = function() {
+        let selectedChild = childSelect.value;
+        let selectedTest = testSelect.value;
+        showTeacherReviewSubmission(selectedChild, selectedTest);
+      };
+      
+      container.appendChild(childSelect);
+      container.appendChild(document.createElement('br'));
+      container.appendChild(document.createElement('br'));
+      container.appendChild(testSelect);
+      container.appendChild(document.createElement('br'));
+      container.appendChild(document.createElement('br'));
+      container.appendChild(loadBtn);
+    }
+    
+    function showTeacherReviewSubmission(child, testId) {
+      const container = document.getElementById('teacherContent');
+      container.innerHTML = "<h3 style='text-align:center; margin-bottom:20px;'>Review Submission</h3>";
+      let keyImages = "childTestSubmissionImages_" + child + "_" + testId;
+      let submissionStr = localStorage.getItem(keyImages);
+      if (!submissionStr) {
+        container.innerHTML += "<p>No submission available for this test.</p>";
+        return;
+      }
+      // Optionally, display the submitted images
+      let images = JSON.parse(submissionStr);
+      images.forEach((imgData, index) => {
+        let div = document.createElement('div');
+        div.style.marginBottom = "20px";
+        let img = document.createElement('img');
+        img.src = imgData;
+        img.style.maxWidth = "100%";
+        img.style.border = "1px solid #ccc";
+        img.style.borderRadius = "4px";
+        div.appendChild(img);
+        container.appendChild(div);
+      });
+      // Create input for teacher to manually enter a grade
+      let gradeLabel = document.createElement('label');
+      gradeLabel.textContent = "Enter Grade: ";
+      let gradeInput = document.createElement('input');
+      gradeInput.type = "number";
+      gradeInput.id = "gradeInput";
+      gradeInput.style.marginRight = "10px";
+      let gradeBtn = document.createElement('button');
+      gradeBtn.className = "btn";
+      gradeBtn.textContent = "Grade Test";
+      gradeBtn.onclick = function() { gradeTest(child, testId); };
+      container.appendChild(gradeLabel);
+      container.appendChild(gradeInput);
+      container.appendChild(gradeBtn);
+    }
+    
+    function gradeTest(child, testId) {
+      let grade = document.getElementById('gradeInput').value;
+      if (grade === "") {
+        alert("Please enter a grade.");
+        return;
+      }
+      localStorage.setItem("childTestScore_" + child + "_" + testId, grade);
+      localStorage.setItem("childTestGraded_" + child + "_" + testId, "true");
+      document.getElementById('teacherContent').innerHTML = `<p>Test graded. Score: ${grade}.</p>`;
+    }
+    
+    /***********************
+     * Teacher Attendance View
+     ***********************/
+    function loadTeacherAttendance() {
+      const container = document.getElementById('teacherContent');
+      container.innerHTML = "<h3 style='text-align:center; margin-bottom:20px;'>Attendance Calendar</h3>";
+      const calDiv = document.createElement('div');
+      calDiv.id = "teacherAttendanceCalendar";
+      container.appendChild(calDiv);
+      // For teacher view, you might let the teacher select a child.
+      // Here, for simplicity, we display attendance for the first child.
+      let childKey = childUsers[0].username;
+      currentChild = childKey; // temporarily set currentChild for calendar rendering
+      renderAttendanceCalendar("teacherAttendanceCalendar");
+    }
+    
+    /***********************
+     * Logout Functions
+     ***********************/
+    function childLogout() {
+      document.getElementById('childDashboard').classList.add('hidden');
+      document.getElementById('loginWrapper').classList.remove('hidden');
+      document.getElementById('childUsername').value = "";
+      document.getElementById('childPassword').value = "";
+      currentChild = "";
+    }
+    function teacherLogout() {
+      document.getElementById('teacherDashboard').classList.add('hidden');
+      document.getElementById('loginWrapper').classList.remove('hidden');
+      document.getElementById('teacherUsername').value = "";
+      document.getElementById('teacherPassword').value = "";
+    }
+  </script>
+</body>
+</html>
