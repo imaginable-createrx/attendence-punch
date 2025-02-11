@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>NEET App: Multiple Child Users & Multiple Tests</title>
+  <title>NEET App: Multiple Users, Attendance, Materials & Tests</title>
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600&display=swap" rel="stylesheet" />
   <style>
@@ -106,6 +106,7 @@
     .dashboard-content { padding: 20px; }
     
     /* ---------- Child Dashboard Sections ---------- */
+    /* Five tabs: Attendance, Study Materials, Notifications, Tests, Results */
     .attendance-section { text-align: center; }
     .attendance-section h3 { margin-bottom: 15px; color: #667eea; }
     .attendance-section .message { margin-top: 15px; font-size: 1.1rem; color: #28a745; }
@@ -125,6 +126,12 @@
     }
     /* ---------- Study Materials (Accordion) ---------- */
     .accordion { margin: 20px auto; max-width: 800px; }
+    .grade-block { margin-bottom: 20px; }
+    .grade-block h3 {
+      text-align: center;
+      color: #667eea;
+      margin-bottom: 10px;
+    }
     .accordion details {
       background: #f9f9f9;
       border: 1px solid #ddd;
@@ -159,9 +166,19 @@
       padding: 10px 0;
     }
     /* ---------- Tests Tab (Child) ---------- */
-    /* List of available tests */
     #testList { margin-top: 20px; }
     #testList button { margin-bottom: 10px; }
+    /* ---------- Results Tab (Child) ---------- */
+    #childResultsTab { margin-top: 20px; }
+    #childResultsTab table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+    }
+    #childResultsTab th, #childResultsTab td {
+      border: 1px solid #ccc;
+      padding: 8px;
+    }
     
     /* ---------- Test Page (Separate from Child Dashboard) ---------- */
     #testPage {
@@ -227,6 +244,12 @@
     .teacher-nav ul li:hover { background: #5a67d8; }
     .teacher-nav ul li.logout { background: #e53e3e; }
     .teacher-nav ul li.logout:hover { background: #c53030; }
+    /* Dropdown styling for teacher dashboard */
+    select {
+      padding: 8px;
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
@@ -260,6 +283,7 @@
         <li data-tab="materials" onclick="switchChildTab('materials')">Study Materials</li>
         <li data-tab="notifications" onclick="switchChildTab('notifications')">Notifications</li>
         <li data-tab="tests" onclick="switchChildTab('tests')">Tests</li>
+        <li data-tab="results" onclick="switchChildTab('results')">Results</li>
         <li class="logout" onclick="childLogout()">Logout</li>
       </ul>
     </nav>
@@ -270,7 +294,6 @@
           <h3>Mark Your Attendance</h3>
           <button class="btn" id="attendanceBtn" onclick="markAttendance()">Mark Attendance</button>
           <div class="message" id="attendanceMsg"></div>
-          <!-- Calendar for current month -->
           <div id="attendanceCalendar"></div>
         </div>
       </div>
@@ -286,8 +309,22 @@
       </div>
       <!-- Tests Tab (Child) -->
       <div id="childTestsTab" class="hidden">
-        <h3 style="text-align:center; color:#667eea; margin-bottom:20px;">Tests</h3>
+        <h3 style="text-align:center; color:#667eea; margin-bottom:20px;">Available Tests</h3>
         <div id="testList"></div>
+      </div>
+      <!-- Results Tab (Child) -->
+      <div id="childResultsTab" class="hidden">
+        <h3 style="text-align:center; color:#667eea; margin-bottom:20px;">Test Results</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Test Name</th>
+              <th>Status</th>
+              <th>Grade</th>
+            </tr>
+          </thead>
+          <tbody id="resultsTableBody"></tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -315,8 +352,8 @@
     /***********************
      * Global Variables and Data Arrays
      ***********************/
-    var currentChild = "";      // stores the username of the logged-in child
-    var currentTestId = "";       // stores the selected test's ID
+    var currentChild = "";      // stores the logged-in child's username
+    var currentTestId = "";       // stores the selected test ID
     var currentTestPdf = "";      // stores the PDF URL for the selected test
     
     // Define valid child users
@@ -325,7 +362,7 @@
       { username: "child2", password: "pass2" },
       { username: "child3", password: "pass3" }
     ];
-    // Teacher credentials remain as before.
+    // Teacher credentials: teacher / teacher123
     
     // Available tests (modify PDF URLs as needed)
     var availableTests = [
@@ -351,7 +388,6 @@
     function renderAttendanceCalendar(containerId) {
       const container = document.getElementById(containerId);
       container.innerHTML = "";
-      // Use currentChild if set; otherwise use "default"
       let childKey = currentChild || "default";
       const records = getAttendanceRecords(childKey);
       const now = new Date();
@@ -387,9 +423,9 @@
               cell.style.backgroundColor = "#eee";
             } else {
               if (records[dateStr]) {
-                cell.style.backgroundColor = "#c6f6d5"; // Present
+                cell.style.backgroundColor = "#c6f6d5"; // Present (green)
               } else {
-                cell.style.backgroundColor = "#fed7d7"; // Absent
+                cell.style.backgroundColor = "#fed7d7"; // Absent (red)
               }
             }
             date++;
@@ -438,7 +474,6 @@
         document.getElementById('loginWrapper').classList.add('hidden');
         document.getElementById('childDashboard').classList.remove('hidden');
         switchChildTab('attendance');
-        // Check today's attendance
         const now = new Date();
         const todayStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,'0')}-${now.getDate().toString().padStart(2,'0')}`;
         const records = getAttendanceRecords(currentChild);
@@ -449,6 +484,7 @@
         loadStudyMaterials();
         renderAttendanceCalendar("attendanceCalendar");
         loadTestList();
+        loadResults();
       } else {
         alert("Invalid child credentials.");
       }
@@ -478,6 +514,7 @@
       document.getElementById('childMaterialsTab').classList.add('hidden');
       document.getElementById('childNotificationsTab').classList.add('hidden');
       document.getElementById('childTestsTab').classList.add('hidden');
+      document.getElementById('childResultsTab').classList.add('hidden');
       if (tab === 'attendance') {
         document.getElementById('childAttendanceTab').classList.remove('hidden');
         renderAttendanceCalendar("attendanceCalendar");
@@ -489,6 +526,9 @@
       } else if (tab === 'tests') {
         document.getElementById('childTestsTab').classList.remove('hidden');
         loadTestList();
+      } else if (tab === 'results') {
+        document.getElementById('childResultsTab').classList.remove('hidden');
+        loadResults();
       }
     }
     
@@ -526,50 +566,64 @@
     }
     
     /***********************
-     * Study Materials (Accordion)
+     * Study Materials (Accordion) – Grouped by Grade
      ***********************/
     function loadStudyMaterials() {
       const accordion = document.getElementById('materialsAccordion');
       accordion.innerHTML = "";
-      const materials = [
-        {
-          subject: "Physics",
-          chapters: [
-            { chapter: "Mechanics", pdf: "materials/physics/mechanics.pdf" },
-            { chapter: "Thermodynamics", pdf: "materials/physics/thermodynamics.pdf" },
-            { chapter: "Optics", pdf: "materials/physics/optics.pdf" }
+      // Define study materials by grade
+      var studyMaterials = {
+        "11th Grade": {
+          "Physics": [
+            { chapter: "Mechanics", pdf: "materials/11th/physics/mechanics.pdf" },
+            { chapter: "Kinematics", pdf: "materials/11th/physics/kinematics.pdf" }
+          ],
+          "Chemistry": [
+            { chapter: "Organic Chemistry", pdf: "materials/11th/chemistry/organic.pdf" },
+            { chapter: "Inorganic Chemistry", pdf: "materials/11th/chemistry/inorganic.pdf" }
+          ],
+          "Biology": [
+            { chapter: "Cell Biology", pdf: "materials/11th/biology/cell.pdf" },
+            { chapter: "Genetics", pdf: "materials/11th/biology/genetics.pdf" }
           ]
         },
-        {
-          subject: "Chemistry",
-          chapters: [
-            { chapter: "Organic Chemistry", pdf: "materials/chemistry/organic.pdf" },
-            { chapter: "Inorganic Chemistry", pdf: "materials/chemistry/inorganic.pdf" },
-            { chapter: "Physical Chemistry", pdf: "materials/chemistry/physical.pdf" }
-          ]
-        },
-        {
-          subject: "Biology",
-          chapters: [
-            { chapter: "Botany", pdf: "materials/biology/botany.pdf" },
-            { chapter: "Zoology", pdf: "materials/biology/zoology.pdf" }
+        "12th Grade": {
+          "Physics": [
+            { chapter: "Modern Physics", pdf: "materials/12th/physics/modern.pdf" },
+            { chapter: "Electromagnetism", pdf: "materials/12th/physics/electromagnetism.pdf" }
+          ],
+          "Chemistry": [
+            { chapter: "Physical Chemistry", pdf: "materials/12th/chemistry/physical.pdf" },
+            { chapter: "Organic Chemistry", pdf: "materials/12th/chemistry/organic.pdf" }
+          ],
+          "Biology": [
+            { chapter: "Evolution", pdf: "materials/12th/biology/evolution.pdf" },
+            { chapter: "Human Physiology", pdf: "materials/12th/biology/physiology.pdf" }
           ]
         }
-      ];
-      materials.forEach(item => {
-        const detailsEl = document.createElement('details');
-        const summaryEl = document.createElement('summary');
-        summaryEl.textContent = item.subject;
-        detailsEl.appendChild(summaryEl);
-        const ulEl = document.createElement('ul');
-        item.chapters.forEach(chapterObj => {
-          const liEl = document.createElement('li');
-          liEl.innerHTML = `<a href="${chapterObj.pdf}" target="_blank">${chapterObj.chapter}</a>`;
-          ulEl.appendChild(liEl);
-        });
-        detailsEl.appendChild(ulEl);
-        accordion.appendChild(detailsEl);
-      });
+      };
+      for (let grade in studyMaterials) {
+        let gradeBlock = document.createElement("div");
+        gradeBlock.className = "grade-block";
+        let gradeTitle = document.createElement("h3");
+        gradeTitle.textContent = grade;
+        gradeBlock.appendChild(gradeTitle);
+        for (let subject in studyMaterials[grade]) {
+          let detailsEl = document.createElement("details");
+          let summaryEl = document.createElement("summary");
+          summaryEl.textContent = subject;
+          detailsEl.appendChild(summaryEl);
+          let ulEl = document.createElement("ul");
+          studyMaterials[grade][subject].forEach(chapterObj => {
+            let liEl = document.createElement("li");
+            liEl.innerHTML = `<a href="${chapterObj.pdf}" target="_blank">${chapterObj.chapter}</a>`;
+            ulEl.appendChild(liEl);
+          });
+          detailsEl.appendChild(ulEl);
+          gradeBlock.appendChild(detailsEl);
+        }
+        accordion.appendChild(gradeBlock);
+      }
     }
     
     /***********************
@@ -600,7 +654,6 @@
       const testListDiv = document.getElementById('testList');
       testListDiv.innerHTML = "";
       availableTests.forEach(test => {
-        // Build a key for this test for the current child:
         let keyAttempted = "childTestAttempted_" + currentChild + "_" + test.id;
         let attempted = localStorage.getItem(keyAttempted);
         let btn = document.createElement("button");
@@ -621,6 +674,41 @@
     }
     
     /***********************
+     * Results Tab (Child) – Show Test Results
+     ***********************/
+    function loadResults() {
+      const tbody = document.getElementById('resultsTableBody');
+      tbody.innerHTML = "";
+      availableTests.forEach(test => {
+        let keyAttempted = "childTestAttempted_" + currentChild + "_" + test.id;
+        let keyGraded = "childTestGraded_" + currentChild + "_" + test.id;
+        let keyScore = "childTestScore_" + currentChild + "_" + test.id;
+        let attempted = localStorage.getItem(keyAttempted);
+        let graded = localStorage.getItem(keyGraded);
+        let score = localStorage.getItem(keyScore);
+        let tr = document.createElement("tr");
+        let tdTest = document.createElement("td");
+        tdTest.textContent = test.name;
+        let tdStatus = document.createElement("td");
+        let tdGrade = document.createElement("td");
+        if (!attempted) {
+          tdStatus.textContent = "Not Attempted";
+          tdGrade.textContent = "-";
+        } else if (attempted && graded !== "true") {
+          tdStatus.textContent = "Submitted (Pending Grading)";
+          tdGrade.textContent = "-";
+        } else if (graded === "true") {
+          tdStatus.textContent = "Graded";
+          tdGrade.textContent = score;
+        }
+        tr.appendChild(tdTest);
+        tr.appendChild(tdStatus);
+        tr.appendChild(tdGrade);
+        tbody.appendChild(tr);
+      });
+    }
+    
+    /***********************
      * Test Page Navigation
      ***********************/
     function goToTestPage() {
@@ -632,6 +720,7 @@
       document.getElementById('testPage').classList.add('hidden');
       document.getElementById('childDashboard').classList.remove('hidden');
       loadTestList();
+      loadResults();
     }
     
     /***********************
@@ -752,7 +841,6 @@
     
     /***********************
      * Teacher Review & Grading (Test) – Custom Grading System
-     * Teacher selects a child and a test, then manually enters a grade.
      ***********************/
     function loadTeacherReview() {
       const container = document.getElementById('teacherContent');
@@ -803,7 +891,6 @@
         container.innerHTML += "<p>No submission available for this test.</p>";
         return;
       }
-      // Optionally, display the submitted images
       let images = JSON.parse(submissionStr);
       images.forEach((imgData, index) => {
         let div = document.createElement('div');
@@ -816,7 +903,7 @@
         div.appendChild(img);
         container.appendChild(div);
       });
-      // Create input for teacher to manually enter a grade
+      // Teacher enters grade manually
       let gradeLabel = document.createElement('label');
       gradeLabel.textContent = "Enter Grade: ";
       let gradeInput = document.createElement('input');
@@ -844,36 +931,150 @@
     }
     
     /***********************
-     * Teacher Attendance View
+     * Teacher Attendance View (with Child Selector)
      ***********************/
     function loadTeacherAttendance() {
       const container = document.getElementById('teacherContent');
       container.innerHTML = "<h3 style='text-align:center; margin-bottom:20px;'>Attendance Calendar</h3>";
-      const calDiv = document.createElement('div');
+      
+      let childSelect = document.createElement('select');
+      childUsers.forEach(user => {
+        let opt = document.createElement('option');
+        opt.value = user.username;
+        opt.textContent = user.username;
+        childSelect.appendChild(opt);
+      });
+      let loadBtn = document.createElement('button');
+      loadBtn.className = "btn";
+      loadBtn.textContent = "Load Attendance";
+      loadBtn.onclick = function() {
+        let selectedChild = childSelect.value;
+        currentChild = selectedChild;
+        renderAttendanceCalendar("teacherAttendanceCalendar");
+      };
+      container.appendChild(childSelect);
+      container.appendChild(document.createElement('br'));
+      container.appendChild(document.createElement('br'));
+      
+      let calDiv = document.createElement('div');
       calDiv.id = "teacherAttendanceCalendar";
       container.appendChild(calDiv);
-      // For teacher view, you might let the teacher select a child.
-      // Here, for simplicity, we display attendance for the first child.
-      let childKey = childUsers[0].username;
-      currentChild = childKey; // temporarily set currentChild for calendar rendering
-      renderAttendanceCalendar("teacherAttendanceCalendar");
     }
     
     /***********************
-     * Logout Functions
+     * Test Page Interface (PDF-Based Test)
+     * Keys include currentChild and currentTestId.
      ***********************/
-    function childLogout() {
-      document.getElementById('childDashboard').classList.add('hidden');
-      document.getElementById('loginWrapper').classList.remove('hidden');
-      document.getElementById('childUsername').value = "";
-      document.getElementById('childPassword').value = "";
-      currentChild = "";
+    const testTimeLimit = 600; // 10 minutes in seconds
+    var pdfTestTimerInterval, pdfTestTimeRemaining;
+    function updateTestPageInterface() {
+      let keyAttempted = "childTestAttempted_" + currentChild + "_" + currentTestId;
+      if (localStorage.getItem(keyAttempted)) {
+        if (localStorage.getItem("childTestGraded_" + currentChild + "_" + currentTestId) === "true") {
+          document.getElementById('testInterface').innerHTML = "<p>Your test has been graded.</p>";
+        } else {
+          document.getElementById('testInterface').innerHTML = "<p>Your test has been submitted. Waiting for teacher grading.</p>";
+        }
+        document.getElementById('returnBtn').classList.remove('hidden');
+      } else {
+        document.getElementById('testInterface').innerHTML = `
+          <div id="testNotAttempted">
+            <button class="btn" onclick="startPDFTest()">Start Test</button>
+          </div>
+        `;
+        document.getElementById('returnBtn').classList.add('hidden');
+      }
     }
-    function teacherLogout() {
-      document.getElementById('teacherDashboard').classList.add('hidden');
-      document.getElementById('loginWrapper').classList.remove('hidden');
-      document.getElementById('teacherUsername').value = "";
-      document.getElementById('teacherPassword').value = "";
+    
+    function startPDFTest() {
+      let keyAttempted = "childTestAttempted_" + currentChild + "_" + currentTestId;
+      if (localStorage.getItem(keyAttempted)) {
+        alert("Test already attempted.");
+        return;
+      }
+      const testInterface = document.getElementById('testInterface');
+      testInterface.innerHTML = `
+        <div id="pdfTestContainer">
+          <div id="pdfTimer">--:--</div>
+          <iframe id="pdfViewer" src="${currentTestPdf}"></iframe>
+        </div>
+        <button class="btn" id="finishTestBtn" onclick="finishPDFTest()">Finish Test</button>
+      `;
+      pdfTestTimeRemaining = testTimeLimit;
+      updatePDFTimerDisplay();
+      pdfTestTimerInterval = setInterval(() => {
+        pdfTestTimeRemaining--;
+        updatePDFTimerDisplay();
+        if (pdfTestTimeRemaining <= 0) {
+          clearInterval(pdfTestTimerInterval);
+          finishPDFTest();
+        }
+      }, 1000);
+    }
+    
+    function updatePDFTimerDisplay() {
+      const timerDisplay = document.getElementById('pdfTimer');
+      const minutes = Math.floor(pdfTestTimeRemaining / 60);
+      const seconds = pdfTestTimeRemaining % 60;
+      timerDisplay.textContent =
+        (minutes < 10 ? "0" + minutes : minutes) + ":" +
+        (seconds < 10 ? "0" + seconds : seconds);
+    }
+    
+    function finishPDFTest() {
+      clearInterval(pdfTestTimerInterval);
+      const pdfContainer = document.getElementById('pdfTestContainer');
+      const finishBtn = document.getElementById('finishTestBtn');
+      if (pdfContainer) pdfContainer.style.display = 'none';
+      if (finishBtn) finishBtn.style.display = 'none';
+      showUploadSectionTestPage();
+    }
+    
+    function showUploadSectionTestPage() {
+      const testInterface = document.getElementById('testInterface');
+      testInterface.innerHTML = `
+        <div id="uploadSection">
+          <p>Please upload a photo(s) of your answer copy (max 2 images):</p>
+          <input type="file" id="uploadInput" accept="image/*" multiple />
+          <button class="btn" onclick="submitUploadedTest()">Submit Test</button>
+        </div>
+      `;
+    }
+    
+    function submitUploadedTest() {
+      const input = document.getElementById('uploadInput');
+      const files = input.files;
+      if (!files || files.length === 0) {
+        alert("Please select at least one image.");
+        return;
+      }
+      if (files.length > 2) {
+        alert("You can upload a maximum of 2 images.");
+        return;
+      }
+      const readerPromises = [];
+      for (let i = 0; i < files.length; i++) {
+        readerPromises.push(new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = function(e) { resolve(e.target.result); };
+          reader.onerror = function() { reject("Error reading file."); };
+          reader.readAsDataURL(files[i]);
+        }));
+      }
+      Promise.all(readerPromises)
+        .then((base64Images) => {
+          let keyImages = "childTestSubmissionImages_" + currentChild + "_" + currentTestId;
+          let keyAttempted = "childTestAttempted_" + currentChild + "_" + currentTestId;
+          let keyGraded = "childTestGraded_" + currentChild + "_" + currentTestId;
+          localStorage.setItem(keyImages, JSON.stringify(base64Images));
+          localStorage.setItem(keyAttempted, "true");
+          localStorage.setItem(keyGraded, "false");
+          document.getElementById('testInterface').innerHTML = "<p>Your test has been submitted. Waiting for teacher grading.</p>";
+          document.getElementById('returnBtn').classList.remove('hidden');
+        })
+        .catch(err => {
+          alert("There was an error processing your images.");
+        });
     }
   </script>
 </body>
