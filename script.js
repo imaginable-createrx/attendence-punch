@@ -73,7 +73,7 @@ function addAnnouncement(message) {
 /* ================================
    Test Timer Variables
 =============================== */
-const testTimeLimit = 600; // 10 minutes in seconds
+const testTimeLimit = 600; // 10 minutes (in seconds)
 var pdfTestTimerInterval, pdfTestTimeRemaining;
 
 /* ================================
@@ -122,7 +122,7 @@ function renderAttendanceCalendar(containerId) {
         cell.textContent = "";
       } else {
         cell.textContent = date;
-        let dateStr = `${year}-${(month+1).toString().padStart(2, "0")}-${date.toString().padStart(2, "0")}`;
+        let dateStr = `${year}-${(month+1).toString().padStart(2,"0")}-${date.toString().padStart(2,"0")}`;
         let cellDate = new Date(year, month, date);
         cell.style.backgroundColor = cellDate > now ? "#eee" : (records[dateStr] ? "#c6f6d5" : "#fed7d7");
         date++;
@@ -233,7 +233,7 @@ function childLogin() {
     loadStudyMaterials();
     renderAttendanceCalendar("attendanceCalendar");
     loadNotifications();
-    loadTestList();
+    loadTestList(); // load tests immediately without date filtering for now
     loadResults();
     loadProfile();
   } else {
@@ -447,7 +447,7 @@ function markAttendance() {
   document.getElementById("attendanceBtn").disabled = true;
   renderAttendanceCalendar("attendanceCalendar");
 }
-  
+
 /* ================================
    Load Study Materials (Teacher-Uploaded Only)
 =============================== */
@@ -508,7 +508,7 @@ function loadNotifications() {
     });
   }
 }
-  
+
 /* ================================
    Load Test List for Child
 =============================== */
@@ -516,14 +516,12 @@ function loadTestList() {
   const testListDiv = document.getElementById("testList");
   testListDiv.innerHTML = "";
   let tests = availableTests.concat(getUploadedTests());
-  let today = new Date().toISOString().split("T")[0];
-  // Filter tests: only show those with no scheduled date OR if scheduled date is today or earlier
-  let filteredTests = tests.filter(test => (!test.date || today >= test.date));
-  if (filteredTests.length === 0) {
+  // For debugging, we now display all tests regardless of date.
+  if (tests.length === 0) {
     testListDiv.innerHTML = "<p style='text-align:center;'>No tests available at the moment.</p>";
     return;
   }
-  filteredTests.forEach(test => {
+  tests.forEach(test => {
     let keyAttempted = "childTestAttempted_" + currentChild + "_" + test.id;
     let attempted = localStorage.getItem(keyAttempted);
     let btn = document.createElement("button");
@@ -577,6 +575,350 @@ function loadResults() {
   });
 }
   
+/* ================================
+   Test Page Navigation & Interface
+=============================== */
+function goToTestPage() {
+  document.getElementById("childDashboard").classList.add("hidden");
+  document.getElementById("testPage").classList.remove("hidden");
+  updateTestPageInterface();
+}
+function returnToDashboard() {
+  document.getElementById("testPage").classList.add("hidden");
+  document.getElementById("childDashboard").classList.remove("hidden");
+  loadTestList();
+  loadResults();
+}
+function updateTestPageInterface() {
+  let keyAttempted = "childTestAttempted_" + currentChild + "_" + currentTestId;
+  if (localStorage.getItem(keyAttempted)) {
+    if (localStorage.getItem("childTestGraded_" + currentChild + "_" + currentTestId) === "true") {
+      document.getElementById("testInterface").innerHTML = "<p>Your test has been graded.</p>";
+    } else {
+      document.getElementById("testInterface").innerHTML = "<p>Your test has been submitted. Waiting for teacher grading.</p>";
+    }
+    document.getElementById("returnBtn").classList.remove("hidden");
+  } else {
+    document.getElementById("testInterface").innerHTML = `
+      <div id="testNotAttempted">
+        <button class="btn" onclick="startPDFTest()">Start Test</button>
+      </div>
+    `;
+    document.getElementById("returnBtn").classList.add("hidden");
+  }
+}
+function startPDFTest() {
+  let keyAttempted = "childTestAttempted_" + currentChild + "_" + currentTestId;
+  if (localStorage.getItem(keyAttempted)) {
+    alert("Test already attempted.");
+    return;
+  }
+  const testInterface = document.getElementById("testInterface");
+  testInterface.innerHTML = `
+    <div id="pdfTestContainer">
+      <div id="pdfTimer">--:--</div>
+      <iframe id="pdfViewer" src="${currentTestPdf}"></iframe>
+    </div>
+    <button class="btn" id="finishTestBtn" onclick="finishPDFTest()">Finish Test</button>
+  `;
+  updatePDFTimerDisplay();
+  pdfTestTimerInterval = setInterval(() => {
+    pdfTestTimeRemaining--;
+    updatePDFTimerDisplay();
+    if (pdfTestTimeRemaining <= 0) {
+      clearInterval(pdfTestTimerInterval);
+      finishPDFTest();
+    }
+  }, 1000);
+}
+function updatePDFTimerDisplay() {
+  const timerDisplay = document.getElementById("pdfTimer");
+  const minutes = Math.floor(pdfTestTimeRemaining / 60);
+  const seconds = pdfTestTimeRemaining % 60;
+  timerDisplay.textContent =
+    (minutes < 10 ? "0" + minutes : minutes) + ":" +
+    (seconds < 10 ? "0" + seconds : seconds);
+}
+function finishPDFTest() {
+  clearInterval(pdfTestTimerInterval);
+  const pdfContainer = document.getElementById("pdfTestContainer");
+  const finishBtn = document.getElementById("finishTestBtn");
+  if (pdfContainer) pdfContainer.style.display = "none";
+  if (finishBtn) finishBtn.style.display = "none";
+  showUploadSectionTestPage();
+}
+function showUploadSectionTestPage() {
+  const testInterface = document.getElementById("testInterface");
+  testInterface.innerHTML = `
+    <div id="uploadSection">
+      <p>Please upload a photo(s) of your answer copy (max 2 images):</p>
+      <input type="file" id="uploadInput" accept="image/*" multiple />
+      <button class="btn" onclick="submitUploadedTest()">Submit Test</button>
+    </div>
+  `;
+}
+function submitUploadedTest() {
+  const input = document.getElementById("uploadInput");
+  const files = input.files;
+  if (!files || files.length === 0) {
+    alert("Please select at least one image.");
+    return;
+  }
+  if (files.length > 2) {
+    alert("You can upload a maximum of 2 images.");
+    return;
+  }
+  const readerPromises = [];
+  for (let i = 0; i < files.length; i++) {
+    readerPromises.push(new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = function(e) { resolve(e.target.result); };
+      reader.onerror = function() { reject("Error reading file."); };
+      reader.readAsDataURL(files[i]);
+    }));
+  }
+  Promise.all(readerPromises)
+    .then((base64Images) => {
+      let keyImages = "childTestSubmissionImages_" + currentChild + "_" + currentTestId;
+      let keyAttempted = "childTestAttempted_" + currentChild + "_" + currentTestId;
+      let keyGraded = "childTestGraded_" + currentChild + "_" + currentTestId;
+      localStorage.setItem(keyImages, JSON.stringify(base64Images));
+      localStorage.setItem(keyAttempted, "true");
+      localStorage.setItem(keyGraded, "false");
+      document.getElementById("testInterface").innerHTML = "<p>Your test has been submitted. Waiting for teacher grading.</p>";
+      document.getElementById("returnBtn").classList.remove("hidden");
+    })
+    .catch(err => {
+      alert("There was an error processing your images.");
+    });
+}
+
+/* ================================
+   Teacher Test Upload Feature
+=============================== */
+function showTestUploadForm() {
+  const container = document.getElementById("teacherContent");
+  container.innerHTML = `
+    <h3 style="text-align:center; margin-bottom:20px;">Upload New Test</h3>
+    <form id="testUploadForm">
+      <input type="text" id="testName" placeholder="Test Name" required /><br><br>
+      <input type="file" id="testPdf" accept="application/pdf" required /><br><br>
+      <input type="number" id="testTimer" placeholder="Time Limit (seconds)" required /><br><br>
+      <input type="date" id="testDate" required /><br><br>
+      <button class="btn" type="submit">Upload Test</button>
+    </form>
+  `;
+  document.getElementById("testUploadForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    uploadTest();
+  });
+}
+function uploadTest() {
+  const testName = document.getElementById("testName").value.trim();
+  const testTimer = parseInt(document.getElementById("testTimer").value);
+  const testDate = document.getElementById("testDate").value;
+  const fileInput = document.getElementById("testPdf");
+  if (!fileInput.files || fileInput.files.length === 0) {
+    alert("Please select a PDF file.");
+    return;
+  }
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const pdfData = e.target.result;
+    let newTest = {
+      id: "uploaded_" + new Date().getTime(),
+      name: testName,
+      pdf: pdfData,
+      timer: testTimer,
+      date: testDate
+    };
+    let uploadedTests = getUploadedTests();
+    uploadedTests.push(newTest);
+    setUploadedTests(uploadedTests);
+    addAnnouncement(`New Test Uploaded: ${testName} (Scheduled on ${testDate})`);
+    alert("Test uploaded successfully!");
+    switchTeacherTab("attendance");
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ================================
+   Teacher Study Material Upload Feature
+=============================== */
+function showMaterialUploadForm() {
+  const container = document.getElementById("teacherContent");
+  container.innerHTML = `
+    <h3 style="text-align:center; margin-bottom:20px;">Upload Study Material</h3>
+    <form id="materialUploadForm">
+      <select id="materialGrade" required>
+        <option value="">Select Grade</option>
+        <option value="11th Grade">11th Grade</option>
+        <option value="12th Grade">12th Grade</option>
+      </select><br><br>
+      <select id="materialSubject" required>
+        <option value="">Select Subject</option>
+        <option value="Chemistry">Chemistry</option>
+        <option value="Physics">Physics</option>
+        <option value="Biology">Biology</option>
+      </select><br><br>
+      <input type="text" id="materialChapter" placeholder="Enter Chapter Name" required /><br><br>
+      <input type="file" id="materialPdf" accept="application/pdf" required /><br><br>
+      <button class="btn" type="submit">Upload Material</button>
+    </form>
+  `;
+  document.getElementById("materialUploadForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+    uploadMaterial();
+  });
+}
+function uploadMaterial() {
+  const grade = document.getElementById("materialGrade").value;
+  const subject = document.getElementById("materialSubject").value;
+  const chapter = document.getElementById("materialChapter").value.trim();
+  const fileInput = document.getElementById("materialPdf");
+  if (!fileInput.files || fileInput.files.length === 0) {
+    alert("Please select a PDF file.");
+    return;
+  }
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const pdfData = e.target.result;
+    let newMaterial = {
+      id: "material_" + new Date().getTime(),
+      grade: grade,
+      subject: subject,
+      chapter: chapter,
+      pdf: pdfData
+    };
+    let materials = getUploadedMaterials();
+    materials.push(newMaterial);
+    setUploadedMaterials(materials);
+    addAnnouncement(`New Study Material Uploaded: ${grade} ${subject} - ${chapter}`);
+    alert("Study material uploaded successfully!");
+    switchTeacherTab("attendance");
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ================================
+   Teacher Attendance View
+=============================== */
+function loadTeacherAttendance() {
+  const container = document.getElementById("teacherContent");
+  container.innerHTML = "<h3 style='text-align:center; margin-bottom:20px;'>Attendance Calendar</h3>";
+  let childSelect = document.createElement("select");
+  getChildUsers().forEach(user => {
+    let opt = document.createElement("option");
+    opt.value = user.username;
+    opt.textContent = user.name ? user.name : user.username;
+    childSelect.appendChild(opt);
+  });
+  container.appendChild(childSelect);
+  container.appendChild(document.createElement("br"));
+  container.appendChild(document.createElement("br"));
+  if (!currentChild) { currentChild = childSelect.value; }
+  let loadBtn = document.createElement("button");
+  loadBtn.className = "btn";
+  loadBtn.textContent = "Load Attendance";
+  loadBtn.onclick = function() {
+    let selectedChild = childSelect.value;
+    currentChild = selectedChild;
+    renderAttendanceCalendar("teacherAttendanceCalendar");
+  };
+  container.appendChild(loadBtn);
+  container.appendChild(document.createElement("br"));
+  container.appendChild(document.createElement("br"));
+  let calDiv = document.createElement("div");
+  calDiv.id = "teacherAttendanceCalendar";
+  container.appendChild(calDiv);
+  renderAttendanceCalendar("teacherAttendanceCalendar");
+}
+
+/* ================================
+   Teacher Test Review & Grading
+=============================== */
+function loadTeacherReview() {
+  const container = document.getElementById("teacherContent");
+  container.innerHTML = "<h3 style='text-align:center; margin-bottom:20px;'>Review Test Submission</h3>";
+  let childSelect = document.createElement("select");
+  getChildUsers().forEach(user => {
+    let opt = document.createElement("option");
+    opt.value = user.username;
+    opt.textContent = user.name ? user.name : user.username;
+    childSelect.appendChild(opt);
+  });
+  let testSelect = document.createElement("select");
+  let tests = availableTests.concat(getUploadedTests());
+  tests.forEach(test => {
+    let opt = document.createElement("option");
+    opt.value = test.id;
+    opt.textContent = test.name;
+    testSelect.appendChild(opt);
+  });
+  let loadBtn = document.createElement("button");
+  loadBtn.className = "btn";
+  loadBtn.textContent = "Load Submission";
+  loadBtn.onclick = function() {
+    let selectedChild = childSelect.value;
+    let selectedTest = testSelect.value;
+    showTeacherReviewSubmission(selectedChild, selectedTest);
+  };
+  container.appendChild(childSelect);
+  container.appendChild(document.createElement("br"));
+  container.appendChild(document.createElement("br"));
+  container.appendChild(testSelect);
+  container.appendChild(document.createElement("br"));
+  container.appendChild(document.createElement("br"));
+  container.appendChild(loadBtn);
+}
+function showTeacherReviewSubmission(child, testId) {
+  const container = document.getElementById("teacherContent");
+  container.innerHTML = "<h3 style='text-align:center; margin-bottom:20px;'>Review Submission</h3>";
+  let keyImages = "childTestSubmissionImages_" + child + "_" + testId;
+  let submissionStr = localStorage.getItem(keyImages);
+  if (!submissionStr) {
+    container.innerHTML += "<p>No submission available for this test.</p>";
+    return;
+  }
+  let images = JSON.parse(submissionStr);
+  images.forEach((imgData) => {
+    let div = document.createElement("div");
+    div.style.marginBottom = "20px";
+    let img = document.createElement("img");
+    img.src = imgData;
+    img.style.maxWidth = "100%";
+    img.style.border = "1px solid #ccc";
+    img.style.borderRadius = "4px";
+    div.appendChild(img);
+    container.appendChild(div);
+  });
+  let gradeLabel = document.createElement("label");
+  gradeLabel.textContent = "Enter Grade: ";
+  let gradeInput = document.createElement("input");
+  gradeInput.type = "number";
+  gradeInput.id = "gradeInput";
+  gradeInput.style.marginRight = "10px";
+  let gradeBtn = document.createElement("button");
+  gradeBtn.className = "btn";
+  gradeBtn.textContent = "Grade Test";
+  gradeBtn.onclick = function() { gradeTest(child, testId); };
+  container.appendChild(gradeLabel);
+  container.appendChild(gradeInput);
+  container.appendChild(gradeBtn);
+}
+function gradeTest(child, testId) {
+  let grade = document.getElementById("gradeInput").value;
+  if (grade === "") {
+    alert("Please enter a grade.");
+    return;
+  }
+  localStorage.setItem("childTestScore_" + child + "_" + testId, grade);
+  localStorage.setItem("childTestGraded_" + child + "_" + testId, "true");
+  document.getElementById("teacherContent").innerHTML = `<p>Test graded. Score: ${grade}.</p>`;
+}
+
 /* ================================
    Test Page Navigation & Interface
 =============================== */
