@@ -7,7 +7,7 @@ var currentTestPdf = "";
 var teacherCredentials = { username: "teacher", password: "teacher123" };
 
 // Predefined tests (if any)
-var availableTests = []; // leave as an empty array if none
+var availableTests = []; // Leave empty if none
 
 /* ================================
    Parent Users Utility
@@ -73,7 +73,7 @@ function addAnnouncement(message) {
 /* ================================
    Test Timer Variables
 =============================== */
-const testTimeLimit = 600; // 10 minutes (in seconds)
+const testTimeLimit = 600; // 10 minutes in seconds
 var pdfTestTimerInterval, pdfTestTimeRemaining;
 
 /* ================================
@@ -122,7 +122,7 @@ function renderAttendanceCalendar(containerId) {
         cell.textContent = "";
       } else {
         cell.textContent = date;
-        let dateStr = `${year}-${(month+1).toString().padStart(2,"0")}-${date.toString().padStart(2,"0")}`;
+        let dateStr = `${year}-${(month+1).toString().padStart(2, "0")}-${date.toString().padStart(2, "0")}`;
         let cellDate = new Date(year, month, date);
         cell.style.backgroundColor = cellDate > now ? "#eee" : (records[dateStr] ? "#c6f6d5" : "#fed7d7");
         date++;
@@ -509,32 +509,38 @@ function loadNotifications() {
   }
 }
   
+/* ================================
+   Load Test List for Child
+=============================== */
 function loadTestList() {
   const testListDiv = document.getElementById("testList");
   testListDiv.innerHTML = "";
   let tests = availableTests.concat(getUploadedTests());
   let today = new Date().toISOString().split("T")[0];
-  tests.forEach(test => {
-    // Only show test if no scheduled date or if today's date is on/after test.date
-    if (!test.date || today >= test.date) {
-      let keyAttempted = "childTestAttempted_" + currentChild + "_" + test.id;
-      let attempted = localStorage.getItem(keyAttempted);
-      let btn = document.createElement("button");
-      btn.className = "btn";
-      if (attempted) {
-        btn.textContent = test.name + " (Attempted)";
-        btn.disabled = true;
-      } else {
-        btn.textContent = "Take " + test.name;
-        btn.onclick = function() {
-          currentTestId = test.id;
-          currentTestPdf = test.pdf;
-          pdfTestTimeRemaining = test.timer ? test.timer : testTimeLimit;
-          goToTestPage();
-        };
-      }
-      testListDiv.appendChild(btn);
+  // Filter tests: only show those with no scheduled date OR if scheduled date is today or earlier
+  let filteredTests = tests.filter(test => (!test.date || today >= test.date));
+  if (filteredTests.length === 0) {
+    testListDiv.innerHTML = "<p style='text-align:center;'>No tests available at the moment.</p>";
+    return;
+  }
+  filteredTests.forEach(test => {
+    let keyAttempted = "childTestAttempted_" + currentChild + "_" + test.id;
+    let attempted = localStorage.getItem(keyAttempted);
+    let btn = document.createElement("button");
+    btn.className = "btn";
+    if (attempted) {
+      btn.textContent = test.name + " (Attempted)";
+      btn.disabled = true;
+    } else {
+      btn.textContent = "Take " + test.name;
+      btn.onclick = function() {
+        currentTestId = test.id;
+        currentTestPdf = test.pdf;
+        pdfTestTimeRemaining = test.timer ? test.timer : testTimeLimit;
+        goToTestPage();
+      };
     }
+    testListDiv.appendChild(btn);
   });
 }
   
