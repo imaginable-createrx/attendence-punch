@@ -122,7 +122,7 @@ function renderAttendanceCalendar(containerId) {
         cell.textContent = "";
       } else {
         cell.textContent = date;
-        let dateStr = `${year}-${(month+1).toString().padStart(2,"0")}-${date.toString().padStart(2,"0")}`;
+        let dateStr = `${year}-${(month+1).toString().padStart(2, "0")}-${date.toString().padStart(2, "0")}`;
         let cellDate = new Date(year, month, date);
         cell.style.backgroundColor = cellDate > now ? "#eee" : (records[dateStr] ? "#c6f6d5" : "#fed7d7");
         date++;
@@ -146,7 +146,7 @@ window.addEventListener("load", function() {
     document.getElementById("childDashboard").classList.remove("hidden");
     switchChildTab("attendance");
     var now = new Date();
-    var todayStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,"0")}-${now.getDate().toString().padStart(2,"0")}`;
+    var todayStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, "0")}-${now.getDate().toString().padStart(2, "0")}`;
     var records = getAttendanceRecords(currentChild);
     if (records[todayStr]) {
       document.getElementById("attendanceMsg").textContent = "Attendance marked at " + records[todayStr];
@@ -224,7 +224,7 @@ function childLogin() {
     document.getElementById("childDashboard").classList.remove("hidden");
     switchChildTab("attendance");
     var now = new Date();
-    var todayStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,"0")}-${now.getDate().toString().padStart(2,"0")}`;
+    var todayStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, "0")}-${now.getDate().toString().padStart(2, "0")}`;
     var records = getAttendanceRecords(currentChild);
     if (records[todayStr]) {
       document.getElementById("attendanceMsg").textContent = "Attendance marked at " + records[todayStr];
@@ -233,7 +233,7 @@ function childLogin() {
     loadStudyMaterials();
     renderAttendanceCalendar("attendanceCalendar");
     loadNotifications();
-    loadTestList(); // load tests immediately without date filtering for now
+    loadTestList();
     loadResults();
     loadProfile();
   } else {
@@ -516,7 +516,7 @@ function loadTestList() {
   const testListDiv = document.getElementById("testList");
   testListDiv.innerHTML = "";
   let tests = availableTests.concat(getUploadedTests());
-  // For debugging, we now display all tests regardless of date.
+  // For debugging, display all tests regardless of scheduled date
   if (tests.length === 0) {
     testListDiv.innerHTML = "<p style='text-align:center;'>No tests available at the moment.</p>";
     return;
@@ -651,7 +651,7 @@ function showUploadSectionTestPage() {
   const testInterface = document.getElementById("testInterface");
   testInterface.innerHTML = `
     <div id="uploadSection">
-      <p>Please upload a photo(s) of your answer copy (max 2 images):</p>
+      <p>Please upload a photo(s) of your answer copy:</p>
       <input type="file" id="uploadInput" accept="image/*" multiple />
       <button class="btn" onclick="submitUploadedTest()">Submit Test</button>
     </div>
@@ -664,10 +664,7 @@ function submitUploadedTest() {
     alert("Please select at least one image.");
     return;
   }
-  if (files.length > 2) {
-    alert("You can upload a maximum of 2 images.");
-    return;
-  }
+  // Removed maximum upload limit: users can now upload as many images as they want.
   const readerPromises = [];
   for (let i = 0; i < files.length; i++) {
     readerPromises.push(new Promise((resolve, reject) => {
@@ -995,7 +992,7 @@ function showUploadSectionTestPage() {
   const testInterface = document.getElementById("testInterface");
   testInterface.innerHTML = `
     <div id="uploadSection">
-      <p>Please upload a photo(s) of your answer copy (max 2 images):</p>
+      <p>Please upload a photo(s) of your answer copy:</p>
       <input type="file" id="uploadInput" accept="image/*" multiple />
       <button class="btn" onclick="submitUploadedTest()">Submit Test</button>
     </div>
@@ -1008,10 +1005,7 @@ function submitUploadedTest() {
     alert("Please select at least one image.");
     return;
   }
-  if (files.length > 2) {
-    alert("You can upload a maximum of 2 images.");
-    return;
-  }
+  // Removed limit on number of images
   const readerPromises = [];
   for (let i = 0; i < files.length; i++) {
     readerPromises.push(new Promise((resolve, reject) => {
@@ -1339,7 +1333,7 @@ function showUploadSectionTestPage() {
   const testInterface = document.getElementById("testInterface");
   testInterface.innerHTML = `
     <div id="uploadSection">
-      <p>Please upload a photo(s) of your answer copy (max 2 images):</p>
+      <p>Please upload a photo(s) of your answer copy:</p>
       <input type="file" id="uploadInput" accept="image/*" multiple />
       <button class="btn" onclick="submitUploadedTest()">Submit Test</button>
     </div>
@@ -1352,10 +1346,7 @@ function submitUploadedTest() {
     alert("Please select at least one image.");
     return;
   }
-  if (files.length > 2) {
-    alert("You can upload a maximum of 2 images.");
-    return;
-  }
+  // No maximum limit now—users can upload as many images as they want.
   const readerPromises = [];
   for (let i = 0; i < files.length; i++) {
     readerPromises.push(new Promise((resolve, reject) => {
