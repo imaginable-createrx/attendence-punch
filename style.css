@@ -1,0 +1,287 @@
+/* ================================
+   Global Reset & Base Styles 
+=============================== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  padding: 20px;
+  color: #333;
+}
+a { text-decoration: none; color: inherit; }
+.hidden { display: none; }
+
+/* ================================
+   LOGIN & REGISTRATION SCREEN
+=============================== */
+.login-wrapper {
+  max-width: 400px;
+  margin: 5% auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+.login-header {
+  display: flex;
+  background: #f6f6f6;
+}
+.login-header div {
+  flex: 1;
+  text-align: center;
+  padding: 15px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.3s;
+  color: #555;
+}
+.login-header div.active {
+  background: #fff;
+  border-bottom: 2px solid #667eea;
+  color: #667eea;
+}
+.login-form, .register-form {
+  padding: 20px;
+}
+.login-form h2, .register-form h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.login-form input, .register-form input {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+.login-form input:focus, .register-form input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+.btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  background: #667eea;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.3s;
+}
+.btn:hover { background: #5a67d8; }
+.toggle-link {
+  margin-top: 10px;
+  text-align: center;
+  color: #667eea;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 0.9rem;
+}
+
+/* ================================
+   DASHBOARD STYLES
+=============================== */
+.dashboard {
+  max-width: 900px;
+  margin: 20px auto;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+.dashboard-nav { background: #667eea; }
+.dashboard-nav ul {
+  list-style: none;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0;
+}
+.dashboard-nav ul li {
+  padding: 15px 20px;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.dashboard-nav ul li.active,
+.dashboard-nav ul li:hover { background: #5a67d8; }
+.dashboard-nav ul li.logout { background: #e53e3e; }
+.dashboard-nav ul li.logout:hover { background: #c53030; }
+/* Teacher nav extended */
+.teacher-nav ul li.uploadTest,
+.teacher-nav ul li.uploadMaterial {
+  background: #4caf50;
+}
+.teacher-nav ul li.uploadTest:hover,
+.teacher-nav ul li.uploadMaterial:hover { background: #43a047; }
+.dashboard-content { padding: 20px; }
+
+/* ================================
+   CHILD DASHBOARD SECTIONS
+=============================== */
+.attendance-section { text-align: center; }
+.attendance-section h3 { margin-bottom: 15px; color: #667eea; }
+.attendance-section .message { margin-top: 15px; font-size: 1.1rem; color: #28a745; }
+#attendanceCalendar { margin-top: 20px; }
+#attendanceCalendar table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+#attendanceCalendar th, #attendanceCalendar td {
+  border: 1px solid #ccc;
+  padding: 5px;
+}
+#attendanceNotifications { margin-top: 20px; text-align: center; }
+#attendanceNotifications h3 { margin-bottom: 10px; color: #667eea; }
+#notificationsSection div { border-bottom: 1px solid #ddd; padding: 10px 0; }
+.accordion { margin: 20px auto; max-width: 800px; }
+.grade-block { margin-bottom: 20px; }
+.grade-block h3 { text-align: center; margin-bottom: 10px; color: #667eea; }
+.accordion details {
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  padding: 10px;
+}
+.accordion details summary {
+  cursor: pointer;
+  padding: 10px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #667eea;
+  list-style: none;
+}
+.accordion details summary::-webkit-details-marker { display: none; }
+.accordion details ul { margin-top: 10px; padding-left: 20px; }
+.accordion details ul li { margin-bottom: 8px; }
+.accordion details ul li a {
+  display: inline-block;
+  padding: 6px 10px;
+  background: #667eea;
+  color: #fff;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  transition: background 0.3s;
+}
+.accordion details ul li a:hover { background: #5a67d8; }
+#testList { margin-top: 20px; }
+#testList button { margin-bottom: 10px; }
+#childResultsTab { margin-top: 20px; }
+#childResultsTab table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+#childResultsTab th, #childResultsTab td {
+  border: 1px solid #ccc;
+  padding: 8px;
+}
+/* Child Profile Section */
+#childProfileTab { margin-top: 20px; }
+#childProfileTab p { margin: 10px 0; }
+
+/* ================================
+   TEST PAGE
+=============================== */
+#testPage {
+  max-width: 900px;
+  margin: 20px auto;
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+#pdfTestContainer {
+  position: relative;
+  margin: 20px auto;
+  max-width: 900px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  overflow: hidden;
+}
+#pdfViewer { width: 100%; height: 600px; }
+#pdfTimer {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+#finishTestBtn { margin: 10px auto; display: block; }
+#uploadSection { text-align: center; margin-top: 20px; }
+#uploadSection input[type="file"] { margin-bottom: 10px; }
+#returnBtn { margin-top: 20px; }
+
+/* ================================
+   TEACHER DASHBOARD
+=============================== */
+.teacher-nav ul {
+  list-style: none;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0;
+  background: #667eea;
+}
+.teacher-nav ul li {
+  padding: 15px 20px;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.teacher-nav ul li.active,
+.teacher-nav ul li:hover { background: #5a67d8; }
+.teacher-nav ul li.logout { background: #e53e3e; }
+.teacher-nav ul li.logout:hover { background: #c53030; }
+.teacher-nav ul li.uploadTest,
+.teacher-nav ul li.uploadMaterial {
+  background: #4caf50;
+}
+.teacher-nav ul li.uploadTest:hover,
+.teacher-nav ul li.uploadMaterial:hover { background: #43a047; }
+
+/* ================================
+   PARENT DASHBOARD
+=============================== */
+.parent-nav ul {
+  list-style: none;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0;
+  background: #667eea;
+}
+.parent-nav ul li {
+  padding: 15px 20px;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.parent-nav ul li.active,
+.parent-nav ul li:hover { background: #5a67d8; }
+.parent-nav ul li.logout { background: #e53e3e; }
+.parent-nav ul li.logout:hover { background: #c53030; }
+
+/* ================================
+   Mobile Responsiveness
+=============================== */
+@media (max-width: 600px) {
+  body { padding: 10px; }
+  .login-wrapper, .dashboard { width: 100%; margin: 0 auto; border-radius: 0; }
+  .dashboard-nav ul, .parent-nav ul { flex-direction: column; }
+  .dashboard-nav ul li, .parent-nav ul li { width: 100%; text-align: center; }
+  #attendanceCalendar table, #childResultsTab table { font-size: 0.8rem; }
+  iframe#pdfViewer { height: 400px; }
+  .accordion { width: 100%; }
+}

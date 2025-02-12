@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- Mobile responsiveness -->
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NEET App: Attendance, Materials & Tests</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600&display=swap" rel="stylesheet" />
+  <!-- Link to external CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- ================================
+       LOGIN & REGISTRATION SCREEN
+  ================================ -->
+  <div class="login-wrapper" id="loginContainer">
+    <div class="login-header">
+      <div id="childLoginTab" class="active" onclick="switchLogin('child')">Child Login</div>
+      <div id="parentLoginTab" onclick="switchLogin('parent')">Parent Login</div>
+      <div id="teacherLoginTab" onclick="switchLogin('teacher')">Teacher Login</div>
+    </div>
+    <!-- Child Login Form -->
+    <div class="login-form" id="childLoginForm">
+      <h2>Child Login</h2>
+      <input type="email" id="childEmail" placeholder="Email" required>
+      <input type="password" id="childPassword" placeholder="Password" required>
+      <button class="btn" onclick="childLogin()">Login</button>
+      <p class="toggle-link" onclick="showRegisterForm()">Don't have an account? Register</p>
+    </div>
+    <!-- Registration Form for Child (includes Display Name and Parent Email) -->
+    <div class="register-form hidden" id="childRegisterForm">
+      <h2>Register</h2>
+      <input type="text" id="regName" placeholder="Enter your name" required>
+      <input type="email" id="regEmail" placeholder="Email" required>
+      <input type="password" id="regPassword" placeholder="Password" required>
+      <input type="password" id="regPasswordConfirm" placeholder="Confirm Password" required>
+      <input type="email" id="regParent" placeholder="Parent Email (use same as parent's login)">
+      <button class="btn" onclick="childRegister()">Register</button>
+      <p class="toggle-link" onclick="showLoginForm()">Already have an account? Login</p>
+    </div>
+    <!-- Parent Login Form -->
+    <div class="login-form hidden" id="parentLoginForm">
+      <h2>Parent Login</h2>
+      <input type="email" id="parentEmail" placeholder="Parent Email" required>
+      <input type="password" id="parentPassword" placeholder="Password" required>
+      <button class="btn" onclick="parentLogin()">Login</button>
+      <p class="toggle-link" onclick="showParentRegisterForm()">Don't have an account? Register as Parent</p>
+    </div>
+    <!-- Parent Registration Form -->
+    <div class="register-form hidden" id="parentRegisterForm">
+      <h2>Parent Registration</h2>
+      <input type="email" id="parentRegEmail" placeholder="Parent Email" required>
+      <input type="password" id="parentRegPassword" placeholder="Password" required>
+      <input type="password" id="parentRegPasswordConfirm" placeholder="Confirm Password" required>
+      <button class="btn" onclick="parentRegister()">Register</button>
+      <p class="toggle-link" onclick="showParentLoginForm()">Already have an account? Login</p>
+    </div>
+    <!-- Teacher Login Form -->
+    <div class="login-form hidden" id="teacherLoginForm">
+      <h2>Teacher Login</h2>
+      <input type="text" id="teacherUsername" placeholder="Username" required>
+      <input type="password" id="teacherPassword" placeholder="Password" required>
+      <button class="btn" onclick="teacherLogin()">Login</button>
+    </div>
+  </div>
+  
+  <!-- ================================
+       CHILD DASHBOARD
+  ================================ -->
+  <div class="dashboard hidden" id="childDashboard">
+    <nav class="dashboard-nav">
+      <ul>
+        <li class="active" data-tab="attendance" onclick="switchChildTab('attendance')">Attendance</li>
+        <li data-tab="materials" onclick="switchChildTab('materials')">Study Materials</li>
+        <li data-tab="tests" onclick="switchChildTab('tests')">Tests</li>
+        <li data-tab="results" onclick="switchChildTab('results')">Results</li>
+        <li data-tab="profile" onclick="switchChildTab('profile')">Profile</li>
+        <li class="logout" onclick="childLogout()">Logout</li>
+      </ul>
+    </nav>
+    <div class="dashboard-content">
+      <!-- Attendance Section -->  
+      <div id="childAttendanceTab">
+        <div class="attendance-section">
+          <h3>Mark Your Attendance</h3>
+          <button class="btn" id="attendanceBtn" onclick="markAttendance()">Mark Attendance</button>
+          <div class="message" id="attendanceMsg"></div>
+          <div id="attendanceCalendar"></div>
+          <div id="attendanceNotifications">
+            <h3>Announcements</h3>
+            <div id="notificationsSection"></div>
+          </div>
+        </div>
+      </div>
+      <!-- Study Materials Section -->  
+      <div id="childMaterialsTab" class="hidden">
+        <h3 style="text-align:center; color:#667eea; margin-bottom:20px;">Study Materials</h3>
+        <div class="accordion" id="materialsAccordion"></div>
+      </div>
+      <!-- Tests Section -->  
+      <div id="childTestsTab" class="hidden">
+        <h3 style="text-align:center; color:#667eea; margin-bottom:20px;">Available Tests</h3>
+        <div id="testList"></div>
+      </div>
+      <!-- Results Section -->  
+      <div id="childResultsTab" class="hidden">
+        <h3 style="text-align:center; color:#667eea; margin-bottom:20px;">Test Results</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Test Name</th>
+              <th>Status</th>
+              <th>Grade</th>
+            </tr>
+          </thead>
+          <tbody id="resultsTableBody"></tbody>
+        </table>
+      </div>
+      <!-- Profile Section -->
+      <div id="childProfileTab" class="hidden">
+        <h3 style="text-align:center; color:#667eea; margin-bottom:20px;">My Profile</h3>
+        <div id="profileInfo"></div>
+        <button class="btn" onclick="editProfile()">Edit Profile</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- ================================
+       TEST PAGE
+  ================================ -->
+  <div class="dashboard hidden" id="testPage">
+    <h2 style="text-align:center; color:#667eea; margin-bottom:20px;">NEET Mock Test</h2>
+    <div id="testInterface"></div>
+    <button class="btn hidden" id="returnBtn" onclick="returnToDashboard()">Return to Dashboard</button>
+  </div>
+  
+  <!-- ================================
+       TEACHER DASHBOARD
+  ================================ -->
+  <div class="dashboard hidden" id="teacherDashboard">
+    <nav class="teacher-nav">
+      <ul>
+        <li class="active" data-tab="attendance" onclick="switchTeacherTab('attendance')">Attendance</li>
+        <li data-tab="reviewTests" onclick="switchTeacherTab('reviewTests')">Review Tests</li>
+        <li data-tab="uploadTest" onclick="switchTeacherTab('uploadTest')">Upload Test</li>
+        <li data-tab="uploadMaterial" onclick="switchTeacherTab('uploadMaterial')">Upload Material</li>
+        <li class="logout" onclick="teacherLogout()">Logout</li>
+      </ul>
+    </nav>
+    <div class="dashboard-content" id="teacherContent"></div>
+  </div>
+  
+  <!-- ================================
+       PARENT DASHBOARD
+  ================================ -->
+  <div class="dashboard hidden" id="parentDashboard">
+    <nav class="parent-nav">
+      <ul>
+        <li class="active" data-tab="profiles" onclick="switchParentTab('profiles')">Child Profiles</li>
+        <li data-tab="progress" onclick="switchParentTab('progress')">Progress</li>
+        <li class="logout" onclick="parentLogout()">Logout</li>
+      </ul>
+    </nav>
+    <div class="dashboard-content" id="parentContent"></div>
+  </div>
+  
+  <!-- ================================
+       Script File
+  ================================ -->
+  <script src="script.js"></script>
+</body>
+</html>
