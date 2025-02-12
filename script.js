@@ -6,8 +6,8 @@ var currentTestId = "";
 var currentTestPdf = "";
 var teacherCredentials = { username: "teacher", password: "teacher123" };
 
-// Predefined tests (if any); otherwise, leave empty.
-var availableTests = [];
+// Predefined tests (if any)
+var availableTests = []; // leave as an empty array if none
 
 /* ================================
    Parent Users Utility
@@ -32,7 +32,7 @@ function setChildUsers(users) {
 }
 
 /* ================================
-   Uploaded Tests (Teacher Uploaded)
+   Uploaded Tests Utility
 =============================== */
 function getUploadedTests() {
   var tests = localStorage.getItem("uploadedTests");
@@ -43,7 +43,7 @@ function setUploadedTests(tests) {
 }
 
 /* ================================
-   Uploaded Study Materials (Teacher Uploaded)
+   Uploaded Study Materials Utility
 =============================== */
 function getUploadedMaterials() {
   var materials = localStorage.getItem("uploadedMaterials");
@@ -54,7 +54,7 @@ function setUploadedMaterials(materials) {
 }
 
 /* ================================
-   Announcements (For Notifications)
+   Announcements Utility
 =============================== */
 function getAnnouncements() {
   var anns = localStorage.getItem("announcements");
@@ -71,9 +71,9 @@ function addAnnouncement(message) {
 }
 
 /* ================================
-   Test Time Limit & Timer Variables
+   Test Timer Variables
 =============================== */
-const testTimeLimit = 600; // Default 10 minutes (in seconds)
+const testTimeLimit = 600; // 10 minutes (in seconds)
 var pdfTestTimerInterval, pdfTestTimeRemaining;
 
 /* ================================
@@ -122,7 +122,7 @@ function renderAttendanceCalendar(containerId) {
         cell.textContent = "";
       } else {
         cell.textContent = date;
-        let dateStr = `${year}-${(month+1).toString().padStart(2, "0")}-${date.toString().padStart(2, "0")}`;
+        let dateStr = `${year}-${(month+1).toString().padStart(2,"0")}-${date.toString().padStart(2,"0")}`;
         let cellDate = new Date(year, month, date);
         cell.style.backgroundColor = cellDate > now ? "#eee" : (records[dateStr] ? "#c6f6d5" : "#fed7d7");
         date++;
@@ -136,7 +136,7 @@ function renderAttendanceCalendar(containerId) {
 }
 
 /* ================================
-   Persistent Login for Child
+   Persistent Child Login
 =============================== */
 window.addEventListener("load", function() {
   var storedChild = localStorage.getItem("loggedInChild");
@@ -146,7 +146,7 @@ window.addEventListener("load", function() {
     document.getElementById("childDashboard").classList.remove("hidden");
     switchChildTab("attendance");
     var now = new Date();
-    var todayStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}-${now.getDate().toString().padStart(2, "0")}`;
+    var todayStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,"0")}-${now.getDate().toString().padStart(2,"0")}`;
     var records = getAttendanceRecords(currentChild);
     if (records[todayStr]) {
       document.getElementById("attendanceMsg").textContent = "Attendance marked at " + records[todayStr];
@@ -224,7 +224,7 @@ function childLogin() {
     document.getElementById("childDashboard").classList.remove("hidden");
     switchChildTab("attendance");
     var now = new Date();
-    var todayStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}-${now.getDate().toString().padStart(2, "0")}`;
+    var todayStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,"0")}-${now.getDate().toString().padStart(2,"0")}`;
     var records = getAttendanceRecords(currentChild);
     if (records[todayStr]) {
       document.getElementById("attendanceMsg").textContent = "Attendance marked at " + records[todayStr];
@@ -435,7 +435,7 @@ function editProfile() {
 =============================== */
 function markAttendance() {
   const now = new Date();
-  const todayStr = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}-${now.getDate().toString().padStart(2, "0")}`;
+  const todayStr = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2,"0")}-${now.getDate().toString().padStart(2,"0")}`;
   const records = getAttendanceRecords(currentChild);
   if (records[todayStr]) {
     alert("Attendance already marked for today.");
@@ -447,14 +447,13 @@ function markAttendance() {
   document.getElementById("attendanceBtn").disabled = true;
   renderAttendanceCalendar("attendanceCalendar");
 }
-
+  
 /* ================================
    Load Study Materials (Teacher-Uploaded Only)
 =============================== */
-// Removed static materials; only teacher-uploaded materials are shown.
 function loadStudyMaterials() {
   let uploaded = getUploadedMaterials();
-  // Group the materials by grade and subject
+  // Group materials by grade and subject
   let materials = {};
   uploaded.forEach(function(item) {
     if (!materials[item.grade]) {
@@ -467,12 +466,10 @@ function loadStudyMaterials() {
   });
   const accordion = document.getElementById("materialsAccordion");
   accordion.innerHTML = "";
-  // If no materials are uploaded, show a message
   if (Object.keys(materials).length === 0) {
     accordion.innerHTML = "<p style='text-align:center;'>No study materials available.</p>";
     return;
   }
-  // Render each grade and subject as blocks in an accordion
   for (let grade in materials) {
     let gradeBlock = document.createElement("div");
     gradeBlock.className = "grade-block";
@@ -496,7 +493,7 @@ function loadStudyMaterials() {
     accordion.appendChild(gradeBlock);
   }
 }
-
+  
 function loadNotifications() {
   const notifSection = document.getElementById("notificationsSection");
   notifSection.innerHTML = "";
@@ -511,13 +508,14 @@ function loadNotifications() {
     });
   }
 }
-
+  
 function loadTestList() {
   const testListDiv = document.getElementById("testList");
   testListDiv.innerHTML = "";
   let tests = availableTests.concat(getUploadedTests());
   let today = new Date().toISOString().split("T")[0];
   tests.forEach(test => {
+    // Only show test if no scheduled date or if today's date is on/after test.date
     if (!test.date || today >= test.date) {
       let keyAttempted = "childTestAttempted_" + currentChild + "_" + test.id;
       let attempted = localStorage.getItem(keyAttempted);
@@ -539,7 +537,7 @@ function loadTestList() {
     }
   });
 }
-
+  
 function loadResults() {
   const tbody = document.getElementById("resultsTableBody");
   tbody.innerHTML = "";
@@ -572,7 +570,7 @@ function loadResults() {
     tbody.appendChild(tr);
   });
 }
-
+  
 /* ================================
    Test Page Navigation & Interface
 =============================== */
@@ -915,95 +913,6 @@ function gradeTest(child, testId) {
   localStorage.setItem("childTestScore_" + child + "_" + testId, grade);
   localStorage.setItem("childTestGraded_" + child + "_" + testId, "true");
   document.getElementById("teacherContent").innerHTML = `<p>Test graded. Score: ${grade}.</p>`;
-}
-
-/* ================================
-   Parent Dashboard Functions
-=============================== */
-function loadParentProfiles() {
-  const container = document.getElementById("parentContent");
-  container.innerHTML = "<h3 style='text-align:center; margin-bottom:20px;'>My Child(ren) Profiles</h3>";
-  let parentEmail = localStorage.getItem("loggedInParent");
-  let users = getChildUsers();
-  let myChildren = users.filter(user => user.parent && user.parent === parentEmail);
-  if (myChildren.length === 0) {
-    container.innerHTML += "<p>No child linked to this parent account.</p>";
-  } else {
-    myChildren.forEach(child => {
-      container.innerHTML += `<p><strong>Name:</strong> ${child.name || child.username}<br>
-                              <strong>Email:</strong> ${child.username}</p><hr>`;
-    });
-  }
-}
-function loadParentProgress() {
-  const container = document.getElementById("parentContent");
-  container.innerHTML = "<h3 style='text-align:center; margin-bottom:20px;'>Overall Progress</h3>";
-  let parentEmail = localStorage.getItem("loggedInParent");
-  let users = getChildUsers();
-  let myChildren = users.filter(user => user.parent && user.parent === parentEmail);
-  if (myChildren.length === 0) {
-    container.innerHTML += "<p>No child linked to this parent account.</p>";
-  } else {
-    let totalAttendanceDays = 0, totalTests = 0, totalScore = 0, gradedTests = 0;
-    myChildren.forEach(child => {
-      let attendance = getAttendanceRecords(child.username);
-      totalAttendanceDays += Object.keys(attendance).length;
-      let tests = availableTests.concat(getUploadedTests());
-      tests.forEach(test => {
-        let keyAttempted = "childTestAttempted_" + child.username + "_" + test.id;
-        if (localStorage.getItem(keyAttempted)) {
-          totalTests++;
-          let keyGraded = "childTestGraded_" + child.username + "_" + test.id;
-          if (localStorage.getItem(keyGraded) === "true") {
-            let keyScore = "childTestScore_" + child.username + "_" + test.id;
-            let score = parseFloat(localStorage.getItem(keyScore));
-            if (!isNaN(score)) {
-              totalScore += score;
-              gradedTests++;
-            }
-          }
-        }
-      });
-    });
-    let avgScore = gradedTests > 0 ? (totalScore / gradedTests).toFixed(2) : "N/A";
-    container.innerHTML += `<p><strong>Total Attendance Days:</strong> ${totalAttendanceDays}</p>
-                            <p><strong>Total Tests Attempted:</strong> ${totalTests}</p>
-                            <p><strong>Average Test Score:</strong> ${avgScore}</p>`;
-  }
-}
-
-/* ================================
-   Teacher & Parent: Attendance View
-=============================== */
-function loadTeacherAttendance() {
-  const container = document.getElementById("teacherContent");
-  container.innerHTML = "<h3 style='text-align:center; margin-bottom:20px;'>Attendance Calendar</h3>";
-  let childSelect = document.createElement("select");
-  getChildUsers().forEach(user => {
-    let opt = document.createElement("option");
-    opt.value = user.username;
-    opt.textContent = user.name ? user.name : user.username;
-    childSelect.appendChild(opt);
-  });
-  container.appendChild(childSelect);
-  container.appendChild(document.createElement("br"));
-  container.appendChild(document.createElement("br"));
-  if (!currentChild) { currentChild = childSelect.value; }
-  let loadBtn = document.createElement("button");
-  loadBtn.className = "btn";
-  loadBtn.textContent = "Load Attendance";
-  loadBtn.onclick = function() {
-    let selectedChild = childSelect.value;
-    currentChild = selectedChild;
-    renderAttendanceCalendar("teacherAttendanceCalendar");
-  };
-  container.appendChild(loadBtn);
-  container.appendChild(document.createElement("br"));
-  container.appendChild(document.createElement("br"));
-  let calDiv = document.createElement("div");
-  calDiv.id = "teacherAttendanceCalendar";
-  container.appendChild(calDiv);
-  renderAttendanceCalendar("teacherAttendanceCalendar");
 }
 
 /* ================================
